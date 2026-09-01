@@ -30,8 +30,9 @@ const AnimatedBackground = () => {
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
 
-      particles.forEach((p) => {
+      particles.forEach((p, idx) => {
         p.x += p.speedX;
         p.y += p.speedY;
 
@@ -42,7 +43,16 @@ const AnimatedBackground = () => {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(99, 102, 241, ${p.opacity})`;
+
+        // Light mode: Fresh Emerald Green & Ocean Cyan/Blue | Dark mode: Indigo
+        if (isLight) {
+          ctx.fillStyle = idx % 2 === 0
+            ? `rgba(16, 185, 129, ${p.opacity})`
+            : `rgba(6, 182, 212, ${p.opacity})`;
+        } else {
+          ctx.fillStyle = `rgba(99, 102, 241, ${p.opacity})`;
+        }
+
         ctx.fill();
       });
 
@@ -59,10 +69,10 @@ const AnimatedBackground = () => {
 
   return (
     <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-      {/* Dynamic Ambient Glowing Orbs */}
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-500/20 dark:bg-indigo-600/15 rounded-full blur-3xl animate-pulse-glow" />
-      <div className="absolute top-1/3 -right-40 w-[30rem] h-[30rem] bg-purple-400/20 dark:bg-purple-600/15 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
-      <div className="absolute -bottom-40 left-1/4 w-96 h-96 bg-pink-400/15 dark:bg-pink-600/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '4s' }} />
+      {/* Dynamic Ambient Glowing Orbs: Light Mode uses Green & Blue (Emerald & Cyan), Dark Mode uses Indigo/Purple */}
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-400/25 dark:bg-indigo-600/15 rounded-full blur-3xl animate-pulse-glow" />
+      <div className="absolute top-1/3 -right-40 w-[30rem] h-[30rem] bg-cyan-400/25 dark:bg-purple-600/15 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
+      <div className="absolute -bottom-40 left-1/4 w-96 h-96 bg-blue-400/20 dark:bg-pink-600/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '4s' }} />
       
       {/* Particle Canvas */}
       <canvas ref={canvasRef} className="w-full h-full opacity-60 dark:opacity-60" />

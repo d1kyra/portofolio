@@ -304,3 +304,63 @@ export function saveStoredCertificates(certs) {
   }
 }
 
+export const DEFAULT_GUESTBOOK = [
+  {
+    id: 'cmt-1',
+    name: 'Alex Pratama',
+    message: 'Website all-in-one nya keren banget! Suara ambient hujan nya ngebantu banget pas ngoding.',
+    created_at: '28 Feb 2026',
+    likes: 4
+  },
+  {
+    id: 'cmt-2',
+    name: 'Nadia Salsabila',
+    message: 'Laporan PKL nya rapi dan inspiratif. Semangat persiapan masuk Informatika ITB!',
+    created_at: '1 Mar 2026',
+    likes: 7
+  }
+];
+
+export function getStoredGuestbook() {
+  try {
+    const data = localStorage.getItem('d1kyra_guestbook');
+    return data ? JSON.parse(data) : DEFAULT_GUESTBOOK;
+  } catch (e) {
+    return DEFAULT_GUESTBOOK;
+  }
+}
+
+export function saveStoredGuestbook(comments) {
+  try {
+    localStorage.setItem('d1kyra_guestbook', JSON.stringify(comments));
+  } catch (e) {
+    console.error('Error saving guestbook', e);
+  }
+}
+
+export function getStoredContactMessages() {
+  try {
+    const data = localStorage.getItem('d1kyra_contact_inbox');
+    return data ? JSON.parse(data) : [
+      {
+        id: 'msg-1',
+        name: 'Budi Santoso',
+        email: 'budi@techfirm.id',
+        message: 'Halo Kyra, tertarik untuk diskusi mengenai proyek web React & UI. Salam sukses!',
+        date: '1 Mar 2026'
+      }
+    ];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveStoredContactMessages(messages) {
+  try {
+    localStorage.setItem('d1kyra_contact_inbox', JSON.stringify(messages));
+  } catch (e) {
+    console.error('Error saving contact messages', e);
+  }
+}
+
+

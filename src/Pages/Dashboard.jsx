@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { LayoutDashboard, BookOpen, StickyNote, FolderGit2, LogOut, User, Plus, Trash2, Edit3, Shield, ArrowUpRight, Sparkles, Award, X, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
-import { getStoredArticles, saveStoredArticles, getStoredNotes, saveStoredNotes, getStoredProjects, saveStoredProjects, getStoredCertificates, saveStoredCertificates, getStoredProfile } from '../utils/storage';
+import { LayoutDashboard, BookOpen, StickyNote, FolderGit2, LogOut, User, Plus, Trash2, Edit3, Shield, ArrowUpRight, Sparkles, Award, X, Image as ImageIcon, CheckCircle2, Mail, MessageSquare, Inbox, Send, Heart } from 'lucide-react';
+import { getStoredArticles, saveStoredArticles, getStoredNotes, saveStoredNotes, getStoredProjects, saveStoredProjects, getStoredCertificates, saveStoredCertificates, getStoredProfile, getStoredGuestbook, saveStoredGuestbook, getStoredContactMessages, saveStoredContactMessages } from '../utils/storage';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Dashboard = () => {
@@ -11,11 +11,14 @@ const Dashboard = () => {
   const userEmail = sessionStorage.getItem('emailUser') || 'd1kyra@gmail.com';
   const profile = getStoredProfile(userName);
 
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'articles' | 'notes' | 'projects' | 'certificates'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'articles' | 'notes' | 'projects' | 'certificates' | 'messages'
+  const [messageSubTab, setMessageSubTab] = useState('contact'); // 'contact' | 'guestbook'
   const [articles, setArticles] = useState(getStoredArticles);
   const [notes, setNotes] = useState(getStoredNotes);
   const [projects, setProjects] = useState(getStoredProjects);
   const [certificates, setCertificates] = useState(getStoredCertificates);
+  const [guestbook, setGuestbook] = useState(getStoredGuestbook);
+  const [contactMessages, setContactMessages] = useState(getStoredContactMessages);
 
   // Modals for Adding content
   const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
@@ -154,11 +157,48 @@ const Dashboard = () => {
     triggerToast('✓ Sertifikat baru berhasil ditambahkan!');
   };
 
+  // Message Deletion Handlers
+  const handleDeleteContactMsg = (id) => {
+    if (window.confirm('Hapus pesan kontak ini?')) {
+      const updated = contactMessages.filter((m) => m.id !== id);
+      setContactMessages(updated);
+      saveStoredContactMessages(updated);
+      triggerToast('✓ Pesan formulir kontak berhasil dihapus.');
+    }
+  };
+
+  const handleClearAllContactMsg = () => {
+    if (window.confirm('Hapus SEMUA pesan formulir kontak?')) {
+      setContactMessages([]);
+      saveStoredContactMessages([]);
+      triggerToast('✓ Seluruh pesan kontak telah dibersihkan.');
+    }
+  };
+
+  const handleDeleteGuestMsg = (id) => {
+    if (window.confirm('Hapus pesan buku tamu ini?')) {
+      const updated = guestbook.filter((g) => g.id !== id);
+      setGuestbook(updated);
+      saveStoredGuestbook(updated);
+      triggerToast('✓ Pesan buku tamu berhasil dihapus.');
+    }
+  };
+
+  const handleClearAllGuestMsg = () => {
+    if (window.confirm('Hapus SEMUA pesan di buku tamu?')) {
+      setGuestbook([]);
+      saveStoredGuestbook([]);
+      triggerToast('✓ Seluruh pesan buku tamu telah dibersihkan.');
+    }
+  };
+
+  const totalMessagesCount = contactMessages.length + guestbook.length;
+
   return (
     <>
       <Helmet>
         <title>Admin Dashboard Kyra | d1kyra Platform</title>
-        <meta name="description" content="Panel kendali manajemen konten khusus akun Kyra untuk portofolio, artikel, catatan, sertifikat, dan profil." />
+        <meta name="description" content="Panel kendali manajemen konten khusus akun Kyra untuk portofolio, artikel, catatan, sertifikat, pesan masuk, dan profil." />
       </Helmet>
 
       {/* Toast */}
@@ -221,9 +261,10 @@ const Dashboard = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap p-1 bg-white/5 rounded-2xl border border-white/10 glass-panel max-w-2xl">
+        <div className="flex flex-wrap p-1 bg-white/5 rounded-2xl border border-white/10 glass-panel max-w-3xl">
           {[
             { id: 'overview', label: 'Ringkasan', icon: LayoutDashboard },
+            { id: 'messages', label: `Pesan Masuk (${totalMessagesCount})`, icon: Mail, badge: totalMessagesCount > 0 },
             { id: 'articles', label: `Artikel (${articles.length})`, icon: BookOpen },
             { id: 'notes', label: `Catatan (${notes.length})`, icon: StickyNote },
             { id: 'projects', label: `Proyek (${projects.length})`, icon: FolderGit2 },
@@ -234,7 +275,7 @@ const Dashboard = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 min-w-[100px] flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
+                className={`flex-1 min-w-[110px] flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
                   activeTab === tab.id
                     ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
                     : 'text-gray-400 hover:text-white'
@@ -250,41 +291,50 @@ const Dashboard = () => {
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div className="space-y-8">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="p-6 rounded-2xl glass-panel border border-white/10 space-y-2">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              <div className="p-5 rounded-2xl glass-panel border border-white/10 space-y-2">
+                <div className="flex justify-between items-center text-cyan-400">
+                  <Mail className="w-5 h-5" />
+                  <span className="text-[10px] font-bold uppercase">Pesan Masuk</span>
+                </div>
+                <h3 className="text-3xl font-display font-black text-white">{totalMessagesCount}</h3>
+                <p className="text-[10px] text-gray-400">Kontak & Buku Tamu</p>
+              </div>
+
+              <div className="p-5 rounded-2xl glass-panel border border-white/10 space-y-2">
                 <div className="flex justify-between items-center text-indigo-400">
                   <BookOpen className="w-5 h-5" />
-                  <span className="text-xs font-bold uppercase">Artikel</span>
+                  <span className="text-[10px] font-bold uppercase">Artikel</span>
                 </div>
                 <h3 className="text-3xl font-display font-black text-white">{articles.length}</h3>
-                <p className="text-[11px] text-gray-400">Laporan PKL & Tips</p>
+                <p className="text-[10px] text-gray-400">Laporan PKL & Tips</p>
               </div>
 
-              <div className="p-6 rounded-2xl glass-panel border border-white/10 space-y-2">
+              <div className="p-5 rounded-2xl glass-panel border border-white/10 space-y-2">
                 <div className="flex justify-between items-center text-purple-400">
                   <StickyNote className="w-5 h-5" />
-                  <span className="text-xs font-bold uppercase">Catatan</span>
+                  <span className="text-[10px] font-bold uppercase">Catatan</span>
                 </div>
                 <h3 className="text-3xl font-display font-black text-white">{notes.length}</h3>
-                <p className="text-[11px] text-gray-400">Ide & agenda harian</p>
+                <p className="text-[10px] text-gray-400">Ide & agenda harian</p>
               </div>
 
-              <div className="p-6 rounded-2xl glass-panel border border-white/10 space-y-2">
+              <div className="p-5 rounded-2xl glass-panel border border-white/10 space-y-2">
                 <div className="flex justify-between items-center text-emerald-400">
                   <FolderGit2 className="w-5 h-5" />
-                  <span className="text-xs font-bold uppercase">Portofolio</span>
+                  <span className="text-[10px] font-bold uppercase">Portofolio</span>
                 </div>
                 <h3 className="text-3xl font-display font-black text-white">{projects.length}</h3>
-                <p className="text-[11px] text-gray-400">Showcase proyek web</p>
+                <p className="text-[10px] text-gray-400">Showcase proyek web</p>
               </div>
 
-              <div className="p-6 rounded-2xl glass-panel border border-white/10 space-y-2">
+              <div className="p-5 rounded-2xl glass-panel border border-white/10 space-y-2">
                 <div className="flex justify-between items-center text-amber-400">
                   <Award className="w-5 h-5" />
-                  <span className="text-xs font-bold uppercase">Sertifikat</span>
+                  <span className="text-[10px] font-bold uppercase">Sertifikat</span>
                 </div>
                 <h3 className="text-3xl font-display font-black text-white">{certificates.length}</h3>
-                <p className="text-[11px] text-gray-400">Prestasi & lisensi</p>
+                <p className="text-[10px] text-gray-400">Prestasi & lisensi</p>
               </div>
             </div>
 
@@ -295,6 +345,19 @@ const Dashboard = () => {
                 Aksi Cepat Kelola Konten
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <button
+                  onClick={() => setActiveTab('messages')}
+                  className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500 transition-all flex items-center gap-3 text-left group"
+                >
+                  <div className="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-400 group-hover:scale-110 transition-transform">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-white">Kelola Pesan Masuk</h4>
+                    <p className="text-[10px] text-gray-400">Lihat & hapus pesan</p>
+                  </div>
+                </button>
+
                 <Link
                   to="/bio"
                   className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-indigo-500 transition-all flex items-center gap-3 group"
@@ -336,24 +399,179 @@ const Dashboard = () => {
                     <p className="text-[10px] text-gray-400">Showcase karya baru</p>
                   </div>
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
 
+        {/* MESSAGES TAB (INBOX) */}
+        {activeTab === 'messages' && (
+          <div className="p-7 rounded-3xl glass-panel border border-white/15 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-display font-bold text-lg text-white flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-cyan-400" />
+                  Kotak Pesan Masuk & Moderasi
+                </h3>
+                <p className="text-xs text-gray-400">Kelola dan hapus pesan formulir kontak serta pesan buku tamu.</p>
+              </div>
+
+              {/* Sub-tab Pill */}
+              <div className="flex p-1 bg-white/5 rounded-xl border border-white/10">
                 <button
-                  onClick={() => {
-                    setActiveTab('certificates');
-                    setIsAddCertOpen(true);
-                  }}
-                  className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500 transition-all flex items-center gap-3 text-left group"
+                  onClick={() => setMessageSubTab('contact')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    messageSubTab === 'contact'
+                      ? 'bg-cyan-600 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
                 >
-                  <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 group-hover:scale-110 transition-transform">
-                    <Award className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-xs text-white">Tambah Sertifikat</h4>
-                    <p className="text-[10px] text-gray-400">Unggah sertifikat baru</p>
-                  </div>
+                  Formulir Kontak ({contactMessages.length})
+                </button>
+                <button
+                  onClick={() => setMessageSubTab('guestbook')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    messageSubTab === 'guestbook'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Buku Tamu ({guestbook.length})
                 </button>
               </div>
             </div>
+
+            {/* Sub-tab: Contact Form Messages */}
+            {messageSubTab === 'contact' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center pb-2 border-b border-white/10">
+                  <span className="text-xs font-bold text-gray-400">Daftar Pesan Kontak Masuk:</span>
+                  {contactMessages.length > 0 && (
+                    <button
+                      onClick={handleClearAllContactMsg}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus Semua Pesan Kontak</span>
+                    </button>
+                  )}
+                </div>
+
+                {contactMessages.length === 0 ? (
+                  <div className="text-center py-16 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                    <Inbox className="w-10 h-10 text-gray-500 mx-auto" />
+                    <h4 className="font-bold text-sm text-white">Tidak ada pesan formulir kontak</h4>
+                    <p className="text-xs text-gray-400">Pesan dari halaman kontak akan tersimpan di sini.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {contactMessages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3 hover:border-cyan-500/30 transition-all flex flex-col justify-between"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-sm text-white">{msg.name}</h4>
+                              <span className="text-[11px] text-cyan-400 font-mono">({msg.email})</span>
+                            </div>
+                            <span className="text-[11px] text-gray-400">{msg.date}</span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                            {msg.message}
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                          {msg.email && msg.email.includes('@') ? (
+                            <a
+                              href={`mailto:${msg.email}?subject=Balasan Pesan dari Kyra`}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
+                            >
+                              <Send className="w-3.5 h-3.5" />
+                              <span>Balas Email</span>
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-gray-500">Pesan Formulir</span>
+                          )}
+
+                          <button
+                            onClick={() => handleDeleteContactMsg(msg.id)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/20 transition-all"
+                            title="Hapus Pesan"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Hapus Pesan</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Sub-tab: Guestbook Comments */}
+            {messageSubTab === 'guestbook' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center pb-2 border-b border-white/10">
+                  <span className="text-xs font-bold text-gray-400">Daftar Komentar Buku Tamu:</span>
+                  {guestbook.length > 0 && (
+                    <button
+                      onClick={handleClearAllGuestMsg}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus Semua Buku Tamu</span>
+                    </button>
+                  )}
+                </div>
+
+                {guestbook.length === 0 ? (
+                  <div className="text-center py-16 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                    <MessageSquare className="w-10 h-10 text-gray-500 mx-auto" />
+                    <h4 className="font-bold text-sm text-white">Tidak ada pesan di buku tamu</h4>
+                    <p className="text-xs text-gray-400">Semua pesan buku tamu telah dibersihkan.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {guestbook.map((cmt) => (
+                      <div
+                        key={cmt.id}
+                        className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3 hover:border-indigo-500/30 transition-all flex flex-col justify-between"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-bold text-sm text-white">{cmt.name}</h4>
+                            <span className="text-[11px] text-gray-400">{cmt.created_at}</span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                            {cmt.message}
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                          <span className="text-xs text-pink-400 flex items-center gap-1">
+                            <Heart className="w-3.5 h-3.5 fill-pink-500/20" />
+                            <span>{cmt.likes || 0} Suka</span>
+                          </span>
+
+                          <button
+                            onClick={() => handleDeleteGuestMsg(cmt.id)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/20 transition-all"
+                            title="Hapus Pesan Buku Tamu"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Hapus Pesan</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

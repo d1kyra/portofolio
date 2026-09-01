@@ -1,22 +1,37 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Mail, MessageSquare, Send, MapPin, Phone, Github, Instagram, Linkedin, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Mail, MessageSquare, Send, MapPin, Phone, Github, Instagram, Linkedin, Sparkles, CheckCircle2, Inbox } from 'lucide-react';
 import { TikTokIcon } from '../components/Icons';
+import { getStoredContactMessages, saveStoredContactMessages } from '../utils/storage';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Contact = () => {
+  const isAuth = sessionStorage.getItem('statusLogin') === 'true';
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [isSent, setIsSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.name.trim() || !formData.message.trim()) return;
+
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
+      const newMsg = {
+        id: 'msg-' + Date.now(),
+        name: formData.name.trim(),
+        email: formData.email.trim() || 'Tidak disertakan',
+        message: formData.message.trim(),
+        date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+      };
+      const existing = getStoredContactMessages();
+      saveStoredContactMessages([newMsg, ...existing]);
+
       setIsSent(true);
       setFormData({ name: '', email: '', message: '' });
-    }, 1000);
+    }, 600);
   };
 
   return (
@@ -28,16 +43,28 @@ const Contact = () => {
 
       <div className="pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-12">
         {/* Page Header */}
-        <div className="text-center space-y-2 max-w-2xl mx-auto">
-          <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest block">
-            Get In Touch
-          </span>
-          <h1 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
-            Hubungi & Terhubung
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-400">
-            Punya ide kolaborasi, pertanyaan seputar sistem informasi PKL, atau ingin berdiskusi seputar pemrograman web? Kirimkan pesan Anda langsung di sini.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+          <div className="space-y-1 text-left">
+            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest block">
+              Get In Touch
+            </span>
+            <h1 className="font-display font-black text-3xl sm:text-4xl text-white tracking-tight">
+              Hubungi & Terhubung
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-400 max-w-xl">
+              Punya ide kolaborasi, pertanyaan seputar sistem informasi PKL, atau ingin berdiskusi seputar pemrograman web? Kirimkan pesan Anda langsung di sini.
+            </p>
+          </div>
+
+          {isAuth && (
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold shadow-md hover:scale-105 transition-all self-start sm:self-auto shrink-0"
+            >
+              <Inbox className="w-4 h-4" />
+              <span>Kotak Pesan Masuk</span>
+            </Link>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
