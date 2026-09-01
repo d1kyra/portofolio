@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMusic, PRESET_DATA } from '../context/MusicContext';
-import { Play, Pause, Volume2, VolumeX, Music, Disc3, Radio, ChevronUp, ChevronDown, Sparkles } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Music, Disc3, Radio, ChevronUp, ChevronDown, Sparkles, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const FloatingMusicPlayer = () => {
