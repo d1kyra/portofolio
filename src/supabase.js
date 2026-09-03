@@ -1,25 +1,61 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+const rawUrl = import.meta.env?.VITE_SUPABASE_URL?.trim() || '';
+const rawKey = import.meta.env?.VITE_SUPABASE_ANON_KEY?.trim() || '';
+
+export const isSupabaseConfigured = Boolean(
+  rawUrl &&
+  rawKey &&
+  !rawUrl.includes('placeholder') &&
+  !rawKey.includes('placeholder') &&
+  rawUrl.startsWith('http')
+);
 
 let supabaseClient = null;
 
-try {
-  supabaseClient = createClient(supabaseUrl, supabaseKey);
-} catch (err) {
-  console.warn('Supabase client initialization fallback:', err);
+if (isSupabaseConfigured) {
+  try {
+    supabaseClient = createClient(rawUrl, rawKey, {
+      realtime: {
+        params: {
+          eventsPerSecond: 10,
+        },
+      },
+    });
+  } catch (err) {
+    console.warn('Gagal inisialisasi Supabase client:', err);
+  }
+}
+
+// Fallback dummy client jika Supabase belum dikonfigurasi / offline
+if (!supabaseClient) {
+  const dummyChain = {
+    select: () => dummyChain,
+    insert: () => Promise.resolve({ data: null, error: new Error('Supabase belum dikonfigurasi') }),
+    delete: () => dummyChain,
+    update: () => dummyChain,
+    order: () => Promise.resolve({ data: [], error: new Error('Supabase belum dikonfigurasi') }),
+    eq: () => dummyChain,
+    then: (resolve) => resolve({ data: [], error: null }),
+  };
+
   supabaseClient = {
-    from: () => ({
-      select: () => Promise.resolve({ data: [], error: null }),
-      insert: () => Promise.resolve({ data: [], error: null }),
-      delete: () => Promise.resolve({ data: [], error: null }),
-      update: () => Promise.resolve({ data: [], error: null }),
-    }),
+    from: () => dummyChain,
     channel: () => ({
-      on: () => ({ subscribe: () => {} }),
+      on: () => ({
+        subscribe: (cb) => {
+          if (cb) cb('CLOSED');
+          return { unsubscribe: () => {} };
+        },
+      }),
+      subscribe: (cb) => {
+        if (cb) cb('CLOSED');
+        return { unsubscribe: () => {} };
+      },
     }),
+    removeChannel: () => {},
   };
 }
 
 export const supabase = supabaseClient;
+
